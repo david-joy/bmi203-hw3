@@ -1,9 +1,11 @@
-# HW2 Skeleton
+# HW3
 
 [![Build
-Status](https://travis-ci.org/ucsf-bmi-203-2017/hw2-skeleton.svg?branch=master)](https://travis-ci.org/ucsf-bmi-203-2017/hw2-skeleton)
+Status](https://travis-ci.org/david-joy/bmi203-hw3.svg?branch=master)](https://travis-ci.org/david-joy/bmi203-hw3)
 
-Skeleton for clustering project.
+David Joy 2/24/2017<br/>
+
+Skeleton for sequencing project
 
 ## assignment
 
@@ -22,7 +24,7 @@ The main file that you will need to modify is `cluster.py` and the corresponding
 ├── README.md
 ├── data
 │   ...
-├── hw2skeleton
+├── hw3
 │   ├── __init__.py
 │   ├── __main__.py
 │   ├── cluster.py
@@ -46,7 +48,7 @@ main function (located in `hw2skeleton/__main__.py`) can be run as
 follows
 
 ```
-python -m hw2skeleton -P data test.txt
+python -m hw3 -P data test.txt
 ```
 
 ## testing
