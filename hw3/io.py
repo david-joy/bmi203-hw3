@@ -63,3 +63,40 @@ def read_score_matrix(filepath):
 
     # QA passed, turn the file into a dataframe
     return pd.DataFrame(lines, index=pd.Index(header), columns=header)
+
+
+def read_fasta(filepath):
+    """ Read the fasta file
+
+    Assumes a FASTA file formatted::
+
+        >some sequence name
+        AAAAAAA...
+        AAAAAAA...
+        AAAA
+
+    .. note:: If more than one sequnece is present, only the first is returned
+
+    :param filepath:
+        The FASTA formatted text file containing a single sequence
+    :returns:
+        The sequence name, the sequence
+    """
+    filepath = pathlib.Path(filepath)
+
+    header = None
+    seq = []
+    with filepath.open('rt') as fp:
+        for line in fp:
+            line = line.strip()
+            if line == '':
+                continue
+            if line.startswith('>'):
+                if header is None:
+                    header = line[1:]
+                else:
+                    # Found a second sequence
+                    break
+            else:
+                seq.append(line)
+    return header, ''.join(seq)

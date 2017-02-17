@@ -9,6 +9,7 @@ import pytest
 THISDIR = pathlib.Path(__file__).resolve().parent
 DATADIR = THISDIR.parent / 'data'
 
+# Score matricies and several scores from random cells
 SCORE_MATRICES = [
     ('BLOSUM50', [
         ('A', 'A', 5),
@@ -38,6 +39,13 @@ SCORE_COLUMNS = {
     'X',  '*',
 }
 
+# Sequence files, sequence name, sequence len, first 20 aas
+SEQ_FILES = [
+    ('prot-0004.fa', 'd1flp__ 1.1.1.1.2', 142, 'SLEAAQKSNVTSSWAKASAA'),
+    ('prot-0008.fa', 'd1ash__ 1.1.1.1.33', 147, 'ANKTRELCMKSLEHAKVDTS'),
+    ('prot-0915.fa', 'd1adn__ 7.39.1.1.1', 92, 'MKKATCLTDDQRWQSVLARD'),
+]
+
 
 # Tests
 
@@ -58,3 +66,18 @@ def test_reads_score_matrix(filename, scores):
     # Make sure we can pull out some scores
     for row, col, exp in scores:
         assert mat.loc[row, col] == exp
+
+
+@pytest.mark.parametrize('filename,name,length,head', SEQ_FILES)
+def test_reads_fasta(filename, name, length, head):
+
+    filepath = DATADIR / 'sequences' / filename
+    assert filepath.is_file()
+
+    # Read the score matrix into a pandas dataframe
+    res_name, res_seq = io.read_fasta(filepath)
+
+    # Make sure we get the name and the sequence
+    assert res_name == name
+    assert res_seq[:len(head)] == head
+    assert len(res_seq) == length
