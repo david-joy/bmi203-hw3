@@ -46,6 +46,12 @@ SEQ_FILES = [
     ('prot-0915.fa', 'd1adn__ 7.39.1.1.1', 92, 'MKKATCLTDDQRWQSVLARD'),
 ]
 
+# Pair file name, number of entries
+PAIR_FILES = [
+    ('Negpairs.txt', 50),
+    ('Pospairs.txt', 50),
+]
+
 
 # Tests
 
@@ -81,3 +87,20 @@ def test_reads_fasta(filename, name, length, head):
     assert res_name == name
     assert res_seq[:len(head)] == head
     assert len(res_seq) == length
+
+
+@pytest.mark.parametrize('filename,num_pairs', PAIR_FILES)
+def test_reads_pair_file(filename, num_pairs):
+
+    filepath = DATADIR / filename
+    assert filepath.is_file()
+
+    pairs = io.read_pair_file(filepath)
+
+    assert len(pairs) == num_pairs
+    for p1, p2 in pairs:
+        p1path = DATADIR / p1
+        assert p1path.is_file()
+
+        p2path = DATADIR / p2
+        assert p2path.is_file()

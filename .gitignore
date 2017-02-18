@@ -87,3 +87,7 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# Project specific generated code
+hw3/_alignment.c
+

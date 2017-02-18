@@ -99,4 +99,24 @@ def read_fasta(filepath):
                     break
             else:
                 seq.append(line)
-    return header, ''.join(seq)
+    return header, ''.join(seq).upper()
+
+
+def read_pair_file(filepath):
+    """ Read in a pair file
+
+    :param filepath:
+        Path to the pair file
+    :returns:
+        A list of paired files
+    """
+    filepath = pathlib.Path(filepath)
+
+    pairs = []
+    with filepath.open('rt') as fp:
+        for line in fp:
+            line = line.strip()
+            if line == '':
+                continue
+            pairs.append(line.split())
+    return pairs

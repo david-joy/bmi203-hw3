@@ -16,22 +16,26 @@ DATADIR = THISDIR.parent / 'data'
 
 # Sequence1, sequence2, score matrix file, align1, align2
 SCORES = [
-    ('AAA', 'AAA', 'BLOSUM50', 'AAA', 'AAA'),
-    ('AAARNCCCC', 'AANCCCC', 'BLOSUM62', 'AARNCCCC', 'AA-NCCCC'),
+    ('AAA', 'AAA', 'BLOSUM50', 15, 'AAA', 'AAA'),
+    ('AAARNCCCC', 'AANCCCC', 'BLOSUM62', 47, 'AARNCCCC', 'AA-NCCCC'),
 ]
 
 
 # Tests
 
 
-@pytest.mark.parametrize('seq1,seq2,scorefile,align1,align2', SCORES)
-def test_smith_waterman(seq1, seq2, scorefile, align1, align2):
+@pytest.mark.parametrize('seq1,seq2,scorefile,exp_score,align1,align2',
+                         SCORES)
+def test_smith_waterman(seq1, seq2, scorefile, exp_score, align1, align2):
     scorefile = DATADIR / scorefile
     assert scorefile.is_file()
 
     score = io.read_score_matrix(scorefile)
 
-    res_align1, res_align2 = smith_waterman(seq1, seq2, score)
+    res_score, res_align1, res_align2 = smith_waterman(
+        seq1, seq2, score, gap_opening=-3, gap_extension=-1)
+
+    assert res_score == exp_score
     assert res_align1 == align1
     assert res_align2 == align2
 
@@ -73,10 +77,10 @@ def test_calc_sw_matrix():
     ])
     np.testing.assert_equal(sw_score, exp_score)
 
-    align1, align2 = smith_waterman(seq1, seq2, score,
-                                    gap_opening=-2,
-                                    gap_extension=-2)
+    res_score, align1, align2 = smith_waterman(
+        seq1, seq2, score, gap_opening=-2, gap_extension=-2)
 
+    assert res_score == 13
     assert align1 == 'GTT-AC'
     assert align2 == 'GTTGAC'
 
@@ -101,21 +105,21 @@ def test_calc_sw_matrix_affine():
 
     # Linear gap penalty
     # Nasty mini-gaps all over the place
-    align1, align2 = smith_waterman(seq1, seq2, score,
-                                    gap_opening=-1,
-                                    gap_extension=-1)
+    res_score, align1, align2 = smith_waterman(
+        seq1, seq2, score, gap_opening=-1, gap_extension=-1)
 
+    assert res_score == 39
     assert align1 == 'TACGGGCCCGCTA-C'
     assert align2 == 'TA---G-CC-CTATC'
 
     # Affine gap penalty
     # Grouped blocks of gaps, much nicer
-    align1, align2 = smith_waterman(seq1, seq2, score,
-                                    gap_opening=-5,
-                                    gap_extension=-1)
+    res_score, align1, align2 = smith_waterman(
+        seq1, seq2, score, gap_opening=-5, gap_extension=-1)
 
     # Interestingly, this is (slightly) different from wikipedia
     # I always branch up before left, so I get a slightly different
     # (although still reasonable) local alignment
+    assert res_score == 27
     assert align1 == 'TACGGGCCCGCTA'
     assert align2 == 'TA---GCCC--TA'

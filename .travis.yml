@@ -21,7 +21,9 @@ branches:
         - master
 
 # install dependencies listed in requirements
-install: "pip install -r requirements.txt"
+install:
+    - "pip install -r requirements.txt"
+    - "python setup.py build_ext --inplace"
 
 # run tests
 script:
