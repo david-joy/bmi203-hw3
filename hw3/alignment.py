@@ -5,8 +5,8 @@ from ._alignment import _calc_sw_matrix
 
 # Constants
 
-GAP_OPENING = -3  # Penalty for opening a gap
-GAP_EXTENSION = -1  # Penalty for extending an already open gap
+GAP_OPENING = -7  # Penalty for opening a gap
+GAP_EXTENSION = -3  # Penalty for extending an already open gap
 
 # Functions
 
