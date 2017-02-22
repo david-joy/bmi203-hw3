@@ -54,12 +54,12 @@ def calc_single_score(item):
     :returns:
         fasta1, fasta2, alignment score, normalized score
     """
+    min_len = min([len(item.seq1), len(item.seq2)])
     align_score, _, _ = smith_waterman(
         item.seq1, item.seq2, item.score,
         gap_opening=GAP_OPENING,
         gap_extension=GAP_EXTENSION,
         calc_traceback=False)
-    min_len = min([len(item.seq1), len(item.seq2)])
     return (item.p1, item.p2, align_score, align_score/min_len)
 
 
