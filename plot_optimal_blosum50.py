@@ -23,8 +23,8 @@ sns.set()
 # Constants
 
 TRUE_POSITIVE_RATE = 0.7  # fraction of positive pairs above a threshold
-POSPAIR_SCORES = pathlib.Path('PospairScores.txt')
-NEGPAIR_SCORES = pathlib.Path('NegpairScores.txt')
+POSPAIR_SCORES = pathlib.Path('scores/PospairScores.txt')
+NEGPAIR_SCORES = pathlib.Path('scores/NegpairScores.txt')
 PLOTDIR = pathlib.Path('plots')
 
 # Functions
@@ -40,7 +40,8 @@ def read_scorefile(scorefile):
     """
     return pd.read_csv(str(scorefile),
                        skiprows=1,
-                       names=['fasta1', 'fasta2', 'score', 'opening', 'extension'])
+                       names=['fasta1', 'fasta2', 'score',
+                              'opening', 'extension'])
 
 
 def truepos_percentile(scores, rate=TRUE_POSITIVE_RATE):

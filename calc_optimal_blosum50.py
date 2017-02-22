@@ -19,6 +19,7 @@ from hw3.alignment import smith_waterman
 
 # Constants
 DATADIR = pathlib.Path('./data').resolve()
+SCOREDIR = pathlib.Path('./scores').resolve()
 
 NEGPAIR_FILE = DATADIR / 'Negpairs.txt'
 POSPAIR_FILE = DATADIR / 'Pospairs.txt'
@@ -30,8 +31,8 @@ GAP_OPENING_MAX = 20
 GAP_EXTENSION_MIN = 1
 GAP_EXTENSION_MAX = 5
 
-POSPAIR_SCORES = 'PospairScores.txt'
-NEGPAIR_SCORES = 'NegpairScores.txt'
+POSPAIR_SCORES = SCOREDIR / 'PospairScores.txt'
+NEGPAIR_SCORES = SCOREDIR / 'NegpairScores.txt'
 
 PROCESSES = 8  # Number of alignments to run in parallel
 
