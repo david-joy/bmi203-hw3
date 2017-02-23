@@ -90,6 +90,15 @@ Looking at the length distributions for positive and negative examples, the posi
 
 <img src="plots/min_len_dist.png" />
 
+## Assignment - Part 2
+
+Using the best gap penalties and matrix from part 1, create an alignment for each positive pair
+of sequences and each negative pair of sequences. You will use these static alignments as a
+starting point from which to optimize a scoring matrix to maximize separation of scores of the
+positive and negative pairs.
+
+Using the **BLOSUM50** matrix, gap opening of **-7** and gap extension of **-3**, the sequences were aligned with the code in [align_pairs.py](https://github.com/david-joy/bmi203-hw3/blob/master/align_pairs.py). The positive pair alignments are in [pospairs_BLOSUM50.fa](https://github.com/david-joy/bmi203-hw3/blob/master/alignments/pospairs_BLOSUM50.fa) and the negative pair alignments are in [negpairs_BLOSUM50.fa](https://github.com/david-joy/bmi203-hw3/blob/master/alignments/negpairs_BLOSUM50.fa).
+
 ## Questions - Part 2
 
 ### Question 1
@@ -114,7 +123,7 @@ What would be required in order to make a convincing case that an optimized matr
 
 ## structure
 
-The main algorithm for Smith-Waterman is implemented in `alignment.py` with a Cythonized implementation of dynamic programming in `_alignment.pyx` for speed. Code for reading and writing files is in `io.py`.
+The main algorithm for Smith-Waterman is implemented in [alignment.py](https://github.com/david-joy/bmi203-hw3/blob/master/hw3/alignment.py)with a Cythonized implementation of dynamic programming in [_alignment.pyx](https://github.com/david-joy/bmi203-hw3/blob/master/hw3/_alignment.pyx) for speed. The optimizer is implemented in [optimize.py](https://github.com/david-joy/bmi203-hw3/blob/master/hw3/optimize.py). Code for reading and writing files is in [io.py](https://github.com/david-joy/bmi203-hw3/blob/master/hw3/io.py).
 
 ```
 .
@@ -126,9 +135,11 @@ The main algorithm for Smith-Waterman is implemented in `alignment.py` with a Cy
 │   ├── __init__.py
 │   ├── alignment.py
 │   ├── _alignment.pyx
+│   ├── optimize.py
 │   └── io.py
 └── test
     ├── test_alignment.py
+    ├── test_optimize.py
     └── test_io.py
 ```
 
