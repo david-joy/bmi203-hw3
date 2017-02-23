@@ -102,6 +102,38 @@ def read_fasta(filepath):
     return header, ''.join(seq).upper()
 
 
+def read_alignment_fasta(filepath):
+    """ Read the alignment FASTA files written by ``align_pairs.py``
+
+    .. note:: These are probably not be real FASTA files. For instance, they
+     don't wrap at 60 characters.
+
+    :param filepath:
+        The path to the fasta file
+    :returns:
+        A list of pairs of aligned sequences
+    """
+    filepath = pathlib.Path(filepath)
+
+    pair = []
+    alignments = []
+
+    with filepath.open('rt') as fp:
+        for line in fp:
+            line = line.strip()
+            if line == '':
+                continue
+            if line.startswith('>'):
+                if pair != []:
+                    alignments.append(tuple(pair))
+                    pair = []
+            else:
+                pair.append(line)
+    if pair != []:
+        alignments.append(tuple(pair))
+    return alignments
+
+
 def read_pair_file(filepath):
     """ Read in a pair file
 

@@ -14,13 +14,11 @@ from collections import namedtuple
 from itertools import product
 
 from hw3 import io
+from hw3.consts import DATADIR, SCOREDIR, PROCESSES
 from hw3.alignment import smith_waterman
 
 
 # Constants
-DATADIR = pathlib.Path('./data').resolve()
-SCOREDIR = pathlib.Path('./scores').resolve()
-
 NEGPAIR_FILE = DATADIR / 'Negpairs.txt'
 POSPAIR_FILE = DATADIR / 'Pospairs.txt'
 SCORE_FILE = DATADIR / 'BLOSUM50'
@@ -34,7 +32,6 @@ GAP_EXTENSION_MAX = 5
 POSPAIR_SCORES = SCOREDIR / 'PospairScores.txt'
 NEGPAIR_SCORES = SCOREDIR / 'NegpairScores.txt'
 
-PROCESSES = 8  # Number of alignments to run in parallel
 
 ScoreItem = namedtuple(
     'ScoreItem', 'seq1, seq2, score, gap_opening, gap_extension')

@@ -7,7 +7,8 @@ import numpy as np
 import pandas as pd
 
 from hw3 import io
-from hw3.alignment import smith_waterman, _calc_sw_matrix
+from hw3.alignment import (
+    smith_waterman, _calc_sw_matrix, _encode_sw_matrix)
 
 
 # Constants
@@ -57,8 +58,24 @@ def test_calc_sw_matrix():
     score = pd.DataFrame(score, columns=['A', 'C', 'T', 'G'],
                          index=['A', 'C', 'T', 'G'])
 
+    # Encode the string as an array
+    enc_seq1, enc_seq2, enc_score = _encode_sw_matrix(seq1, seq2, score)
+
+    exp_seq1 = np.array([2, 3, 2, 2, 0, 1, 3, 3])
+    exp_seq2 = np.array([3, 3, 2, 2, 3, 0, 1, 2, 0])
+    exp_score = np.array([
+        [3, -3, -3, -3],
+        [-3, 3, -3, -3],
+        [-3, -3, 3, -3],
+        [-3, -3, -3, 3],
+    ])
+
+    np.testing.assert_equal(enc_seq1, exp_seq1)
+    np.testing.assert_equal(enc_seq2, exp_seq2)
+    np.testing.assert_equal(enc_score, exp_score)
+
     # Calculate the scores
-    sw_score, sw_path = _calc_sw_matrix(seq1, seq2, score,
+    sw_score, sw_path = _calc_sw_matrix(enc_seq1, enc_seq2, enc_score,
                                         gap_opening=-2,
                                         gap_extension=-2)
 

@@ -8,19 +8,17 @@ we have
 
 # Imports
 import time
-import pathlib
 import multiprocessing
 from collections import namedtuple
 
 # Our own imports
 from hw3 import io
+from hw3.consts import (
+    DATADIR, SCOREDIR, GAP_OPENING, GAP_EXTENSION, PROCESSES)
 from hw3.alignment import smith_waterman
 
 
 # Constants
-DATADIR = pathlib.Path('./data').resolve()
-SCOREDIR = pathlib.Path('./scores').resolve()
-
 NEGPAIR_FILE = DATADIR / 'Negpairs.txt'
 POSPAIR_FILE = DATADIR / 'Pospairs.txt'
 SCORE_FILES = [
@@ -30,11 +28,6 @@ SCORE_FILES = [
     DATADIR / 'PAM100',
     DATADIR / 'PAM250',
 ]
-
-GAP_OPENING = -7  # Penalty for opening a gap
-GAP_EXTENSION = -3  # Penalty for extending an already open gap
-
-PROCESSES = 8  # Number of CPUs to run in parallel
 
 OVERWRITE = False  # If True, delete the old score files. Else, reuse them
 

@@ -8,8 +8,6 @@ a fixed true positive rate.
 """
 
 # Imports
-import pathlib
-
 import numpy as np
 
 import pandas as pd
@@ -17,15 +15,17 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 import seaborn as sns
+
+from hw3.consts import SCOREDIR, PLOTDIR
+
 sns.set()
 
 
 # Constants
 
 TRUE_POSITIVE_RATE = 0.7  # fraction of positive pairs above a threshold
-POSPAIR_SCORES = pathlib.Path('scores/PospairScores.txt')
-NEGPAIR_SCORES = pathlib.Path('scores/NegpairScores.txt')
-PLOTDIR = pathlib.Path('plots')
+POSPAIR_SCORES = SCOREDIR / 'PospairScores.txt'
+NEGPAIR_SCORES = SCOREDIR / 'NegpairScores.txt'
 
 # Functions
 

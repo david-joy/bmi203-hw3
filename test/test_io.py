@@ -8,6 +8,7 @@ import pytest
 # Constants
 THISDIR = pathlib.Path(__file__).resolve().parent
 DATADIR = THISDIR.parent / 'data'
+ALIGNDIR = THISDIR.parent / 'alignments'
 
 # Score matricies and several scores from random cells
 SCORE_MATRICES = [
@@ -52,6 +53,10 @@ PAIR_FILES = [
     ('Pospairs.txt', 50),
 ]
 
+ALIGNMENT_FILES = [
+    ('negpairs_BLOSUM50.fa', 50),
+    ('pospairs_BLOSUM50.fa', 50),
+]
 
 # Tests
 
@@ -104,3 +109,16 @@ def test_reads_pair_file(filename, num_pairs):
 
         p2path = DATADIR / p2
         assert p2path.is_file()
+
+
+@pytest.mark.parametrize('filename,num_pairs', ALIGNMENT_FILES)
+def test_reads_alignment_fasta(filename, num_pairs):
+
+    filepath = ALIGNDIR / filename
+    assert filepath.is_file()
+
+    pairs = io.read_alignment_fasta(filepath)
+
+    assert len(pairs) == num_pairs
+    for seq1, seq2 in pairs:
+        assert len(seq1) == len(seq2)

@@ -4,55 +4,21 @@
 
 # Imports
 import pathlib
-import multiprocessing
 import argparse
-from collections import namedtuple
 
 from hw3 import io
-from hw3.alignment import smith_waterman
+from hw3.consts import (
+    DATADIR, ALIGNDIR, GAP_OPENING, GAP_EXTENSION, PROCESSES)
+from hw3.alignment import align_all
 
 # Constants
-
-DATADIR = pathlib.Path('./data').resolve()
-ALIGNDIR = pathlib.Path('./alignments').resolve()
-
 NEGPAIR_FILE = DATADIR / 'Negpairs.txt'
 POSPAIR_FILE = DATADIR / 'Pospairs.txt'
 
 SCORE_FILE = DATADIR / 'BLOSUM50'
-GAP_OPENING = -7  # Penalty for opening a gap
-GAP_EXTENSION = -3  # Penalty for extending an already open gap
-
-PROCESSES = 8  # Number of CPUs to run in parallel
 
 POSALIGN_FILE = ALIGNDIR / 'pospairs_{}.fa'.format(SCORE_FILE.name)
 NEGALIGN_FILE = ALIGNDIR / 'negpairs_{}.fa'.format(SCORE_FILE.name)
-
-ScoreItem = namedtuple(
-    'ScoreItem', 'p1, p2, score, gap_opening, gap_extension')
-
-
-# Functions
-
-
-def calc_single_alignment(item):
-    """ Calculate a single alignment
-
-    Everything packed in a tuple to be compatible with multiprocessing
-
-    :param item:
-        The ScoreItem object with the seqences, and score matrix
-    :returns:
-        fasta1, fasta2, name1, name2, alignment score, align1, align2
-    """
-    name1, seq1 = io.read_fasta(DATADIR / item.p1)
-    name2, seq2 = io.read_fasta(DATADIR / item.p2)
-
-    align_score, align1, align2 = smith_waterman(
-        seq1, seq2, item.score,
-        gap_opening=item.gap_opening,
-        gap_extension=item.gap_extension)
-    return (item.p1, item.p2, name1, name2, align_score, align1, align2)
 
 # Command line interface
 
@@ -90,28 +56,26 @@ def main(args=None):
     gap_extension = -abs(args.gap_extension)
 
     # Align the positive pairs
-    items = [ScoreItem(p1, p2, score, gap_opening, gap_extension)
-             for p1, p2 in io.read_pair_file(POSPAIR_FILE)]
-
     with POSALIGN_FILE.open('wt') as fp:
-        with multiprocessing.Pool(args.processes) as pool:
-            for res in pool.imap_unordered(calc_single_alignment, items):
-                p1, p2, name1, name2, align_score, align1, align2 = res
-                fp.write(f'>{name1},{name2},{align_score}\n')
-                fp.write(f'{align1}\n')
-                fp.write(f'{align2}\n\n')
+        for res in align_all(POSPAIR_FILE, score,
+                             gap_opening=gap_opening,
+                             gap_extension=gap_extension,
+                             processes=args.processes):
+            p1, p2, name1, name2, align_score, align1, align2 = res
+            fp.write(f'>{name1},{name2},{align_score}\n')
+            fp.write(f'{align1}\n')
+            fp.write(f'{align2}\n\n')
 
-    # And align the negative pairs
-    items = [ScoreItem(p1, p2, score, gap_opening, gap_extension)
-             for p1, p2 in io.read_pair_file(NEGPAIR_FILE)]
-
+    # Align the negative pairs
     with NEGALIGN_FILE.open('wt') as fp:
-        with multiprocessing.Pool(args.processes) as pool:
-            for res in pool.imap_unordered(calc_single_alignment, items):
-                p1, p2, name1, name2, align_score, align1, align2 = res
-                fp.write(f'>{name1},{name2},{align_score}\n')
-                fp.write(f'{align1}\n')
-                fp.write(f'{align2}\n\n')
+        for res in align_all(NEGPAIR_FILE, score,
+                             gap_opening=gap_opening,
+                             gap_extension=gap_extension,
+                             processes=args.processes):
+            p1, p2, name1, name2, align_score, align1, align2 = res
+            fp.write(f'>{name1},{name2},{align_score}\n')
+            fp.write(f'{align1}\n')
+            fp.write(f'{align2}\n\n')
 
 
 if __name__ == '__main__':

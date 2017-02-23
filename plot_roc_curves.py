@@ -7,9 +7,6 @@ normalized version of Smith-Waterman is much worse than the regular score.
 """
 
 # Imports
-
-import pathlib
-
 import numpy as np
 
 import pandas as pd
@@ -19,14 +16,11 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from hw3 import io
+from hw3.consts import DATADIR, SCOREDIR, PLOTDIR
 
 sns.set()
 
 # Constants
-
-DATADIR = pathlib.Path('./data').resolve()
-SCOREDIR = pathlib.Path('./scores').resolve()
-PLOTDIR = pathlib.Path('./plots').resolve()
 
 TRUE_POSITIVE_THRESHOLD = 0.7  # Cutoff True Positive rate
 
