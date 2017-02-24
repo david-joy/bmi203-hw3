@@ -93,3 +93,54 @@ def test_calc_distribution():
     assert np.allclose(score.loc['*', 'C'], 2.32, atol=1e-2)
     assert np.allclose(score.loc['C', '*'], 2.32, atol=1e-2)
     assert np.allclose(score.loc['S', '*'], 2.0, atol=1e-2)
+
+    # See if we can weight some alignments higher than others
+
+    # Score for enrichment in CS pairs
+    score = optimize.calc_distribution([
+        ('CSCSCS', 'SCSCSC'),
+        ('SCCSSS', 'SSCCCS'),
+    ], weights=[1.0, 0.5])
+
+    # Make sure it's symmetric
+    assert np.allclose(score, score.T)
+
+    # Check specific cells
+    assert np.allclose(score.loc['S', 'S'], 1.58, atol=1e-2)
+    assert np.allclose(score.loc['C', 'C'], 1.0, atol=1e-2)
+    assert np.allclose(score.loc['S', 'C'], 3.09, atol=1e-2)
+    assert np.allclose(score.loc['C', 'S'], 3.09, atol=1e-2)
+
+
+def test_calc_score_gradient():
+
+    pos_align = [
+        ('AAAAA', 'AAAAA'),
+        ('RARA', 'ARAR'),
+        ('CCCCC', 'CCCCC')
+    ]
+    pos_scores = [60, 30, 100]
+
+    neg_align = [
+        ('AAAAA', 'AAAAA'),
+        ('CSCS', 'SCSC'),
+        ('XXXX', 'XXXX')
+    ]
+    neg_scores = [10, 50, -10]
+
+    grad = optimize.calc_score_gradient(pos_scores, neg_scores,
+                                        pos_align, neg_align)
+
+    # Gradient should be symmetric
+    assert np.allclose(grad, grad.T)
+
+    # Check for specific cells
+    assert np.allclose(grad.loc['A', 'A'], 0.61, atol=1e-2)
+    assert np.allclose(grad.loc['A', 'R'], 2.32, atol=1e-2)
+    assert np.allclose(grad.loc['R', 'A'], 2.32, atol=1e-2)
+    assert np.allclose(grad.loc['C', 'S'], -2.32, atol=1e-2)
+    assert np.allclose(grad.loc['S', 'C'], -2.32, atol=1e-2)
+
+    # These should have no weight because they're not near the boundary
+    assert np.allclose(grad.loc['C', 'C'], 0.0, atol=1e-2)
+    assert np.allclose(grad.loc['X', 'X'], 0.0, atol=1e-2)
