@@ -1,4 +1,8 @@
 import pathlib
+import tempfile
+
+import numpy as np
+import pandas as pd
 
 from hw3 import io
 
@@ -77,6 +81,58 @@ def test_reads_score_matrix(filename, scores):
     # Make sure we can pull out some scores
     for row, col, exp in scores:
         assert mat.loc[row, col] == exp
+
+
+def test_read_write_score_matrix():
+
+    # Integer scores
+    score = np.array([
+        [4, -1, -2, -3],
+        [-1, 5, -4, -5],
+        [-2, -4, 6, -7],
+        [-3, -5, -7, 8],
+    ])
+    score = pd.DataFrame(score,
+                         columns=['A', 'T', 'C', 'G'],
+                         index=['A', 'T', 'C', 'G'])
+
+    with tempfile.TemporaryDirectory() as tempdir:
+        tempdir = pathlib.Path(tempdir)
+        scorefile = tempdir / 'TEST_SCORE'
+
+        io.write_score_matrix(scorefile, score)
+
+        res_score = io.read_score_matrix(scorefile)
+
+    assert np.all(score.columns == res_score.columns)
+    assert np.all(score.index == res_score.index)
+    np.testing.assert_allclose(score.values, res_score.values)
+
+    # Floating point scores
+    score = np.array([
+        [4, -1.5, -2, -3],
+        [-1.5, 5, -4, -5],
+        [-2, -4, 6.1, -7],
+        [-3, -5, -7, 8],
+    ])
+    score = pd.DataFrame(score,
+                         columns=['A', 'T', 'C', 'G'],
+                         index=['A', 'T', 'C', 'G'])
+
+    with tempfile.TemporaryDirectory() as tempdir:
+        tempdir = pathlib.Path(tempdir)
+        scorefile = tempdir / 'TEST_SCORE'
+
+        io.write_score_matrix(scorefile, score)
+        with open(scorefile, 'rt') as fp:
+            for line in fp:
+                print(line)
+
+        res_score = io.read_score_matrix(scorefile)
+
+    assert np.all(score.columns == res_score.columns)
+    assert np.all(score.index == res_score.index)
+    np.testing.assert_allclose(score.values, res_score.values)
 
 
 @pytest.mark.parametrize('filename,name,length,head', SEQ_FILES)

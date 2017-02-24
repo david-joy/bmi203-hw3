@@ -112,6 +112,23 @@ def test_calc_distribution():
     assert np.allclose(score.loc['C', 'S'], 3.09, atol=1e-2)
 
 
+def test_top_k_weight():
+    # Simpler weighting scheme
+    # Take the k lowest positives and the k highest negatives
+
+    pos_scores = np.array([60, 30, 100, 10, 0, 10, 20, 100, 80, 75])
+    neg_scores = np.array([60, 30, 100, 10, 0, 10, 20, 100, 80])
+
+    pos_weight, neg_weight = optimize.top_k_weight(
+        pos_scores, neg_scores, k=3)
+
+    exp_pos = np.array([0, 0, 0, 1, 1, 1, 0, 0, 0, 0])
+    np.testing.assert_almost_equal(pos_weight, exp_pos)
+
+    exp_neg = np.array([0, 0, 1, 0, 0, 0, 0, 1, 1])
+    np.testing.assert_almost_equal(neg_weight, exp_neg)
+
+
 def test_calc_score_gradient():
 
     pos_align = [
@@ -129,7 +146,8 @@ def test_calc_score_gradient():
     neg_scores = [10, 50, -10]
 
     grad = optimize.calc_score_gradient(pos_scores, neg_scores,
-                                        pos_align, neg_align)
+                                        pos_align, neg_align,
+                                        weights='triangle')
 
     # Gradient should be symmetric
     assert np.allclose(grad, grad.T)

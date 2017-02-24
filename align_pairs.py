@@ -17,9 +17,6 @@ POSPAIR_FILE = DATADIR / 'Pospairs.txt'
 
 SCORE_FILE = DATADIR / 'BLOSUM50'
 
-POSALIGN_FILE = ALIGNDIR / 'pospairs_{}.fa'.format(SCORE_FILE.name)
-NEGALIGN_FILE = ALIGNDIR / 'negpairs_{}.fa'.format(SCORE_FILE.name)
-
 # Command line interface
 
 
@@ -47,6 +44,7 @@ def parse_args(args=None):
 def main(args=None):
     args = parse_args(args=args)
 
+    print('Aligning with {}'.format(args.score_file))
     score = io.read_score_matrix(args.score_file)
 
     ALIGNDIR.mkdir(exist_ok=True, parents=True)
@@ -55,8 +53,12 @@ def main(args=None):
     gap_opening = -abs(args.gap_opening)
     gap_extension = -abs(args.gap_extension)
 
+    posalign_file = ALIGNDIR / 'pospairs_{}.fa'.format(args.score_file.name)
+    negalign_file = ALIGNDIR / 'negpairs_{}.fa'.format(args.score_file.name)
+
     # Align the positive pairs
-    with POSALIGN_FILE.open('wt') as fp:
+    print('Aligning positive pairs: {}'.format(posalign_file))
+    with posalign_file.open('wt') as fp:
         for res in align_all(POSPAIR_FILE, score,
                              gap_opening=gap_opening,
                              gap_extension=gap_extension,
@@ -67,7 +69,8 @@ def main(args=None):
             fp.write(f'{align2}\n\n')
 
     # Align the negative pairs
-    with NEGALIGN_FILE.open('wt') as fp:
+    print('Aligning negative pairs: {}'.format(negalign_file))
+    with negalign_file.open('wt') as fp:
         for res in align_all(NEGPAIR_FILE, score,
                              gap_opening=gap_opening,
                              gap_extension=gap_extension,

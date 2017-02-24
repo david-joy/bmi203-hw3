@@ -4,6 +4,8 @@
 
 # Imports
 import time
+import pathlib
+import argparse
 
 import numpy as np
 
@@ -17,23 +19,36 @@ NEGPAIR_FILE = DATADIR / 'Negpairs.txt'
 POSPAIR_FILE = DATADIR / 'Pospairs.txt'
 
 SCORE_FILE = DATADIR / 'BLOSUM50'
+
 GAP_OPENING = -7  # Penalty for opening a gap
 GAP_EXTENSION = -3  # Penalty for extending an already open gap
 
 ALPHA = 0.1  # Step size for the gradient
-ALPHA_DECAY = 0.6  # Amount to multiply alpha by when the optimizer fails
+ALPHA_DECAY = 0.75  # Amount to multiply alpha by when the optimizer fails
 MIN_ALPHA = 1e-3  # Minimum step size before stopping
 NUM_STEPS = 100  # Number of optimization loops
 
+OPT_MAX = 4.0  # Best score, stop early if we get here
 OPT_WINDOW = 3  # Number of optimization steps to average over
 
 # Functions
 
 
-def main():
+def parse_args(args=None):
+    parser = argparse.ArgumentParser('Optimize a score matrix')
+    parser.add_argument('-s', '--score-file', type=pathlib.Path,
+                        default=SCORE_FILE,
+                        help='Path to the score matrix to use')
+    return parser.parse_args(args=args)
+
+
+def main(args=None):
+
+    args = parse_args(args=args)
+    score_out_file = DATADIR / '{}_OPT'.format(args.score_file.name)
 
     # Initialize the score matrix
-    score = io.read_score_matrix(SCORE_FILE)
+    score = io.read_score_matrix(args.score_file)
     opt_history = []
     score_history = []
 
@@ -81,6 +96,10 @@ def main():
         print('')
 
         opt = optimize.score_matrix_objective(pos_scores, neg_scores)
+        if opt >= OPT_MAX:
+            print('Got perfect score!')
+            break
+
         if len(opt_history) > 3 and opt < sum(opt_history[-OPT_WINDOW:])/OPT_WINDOW:
             print('Got worse opt, dropping alpha...')
             alpha = alpha * ALPHA_DECAY
@@ -122,6 +141,10 @@ def main():
     print('')
     print('Last Opt:   {}'.format(opt))
     print('Last Score: {}'.format(score))
+
+    print('Writing best scoring matrix')
+    io.write_score_matrix(score_out_file, score_history[best_opt_idx])
+
 
 if __name__ == '__main__':
     main()

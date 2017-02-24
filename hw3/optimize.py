@@ -15,6 +15,8 @@ ALPHABET = [
     'K', 'M', 'F', 'P', 'S', 'T', 'W', 'Y', 'V', 'B', 'Z',
     'X',  '*']
 
+WEIGHTS = 'top_k'  # Weigh examples with a top_k, triangle, or flat dist
+TOP_K = 10   # Number of elements to take for top_k
 
 # Functions
 
@@ -85,26 +87,17 @@ def calc_distribution(alignments, weights=None):
     return np.log2(counts)
 
 
-def calc_score_gradient(pos_scores, neg_scores,
-                        pos_align, neg_align):
-    """ Calculate a score matrix update
-
-    Try to increase the margin between positive and negative alignments
+def triangle_weight(pos_scores, neg_scores):
+    """ Trangle weighting of positive and negative scores
 
     :param pos_scores:
-        The np.ndarray of positive alignment scores
+        The array of scores for positive examples
     :param neg_scores:
-        The np.ndarray of negative alignment scores   
-    :param pos_align:
-        The list of paired alignments for positive scores
-    :param neg_align:
-        The list of paired alignments for negative scores
+        The array of scores for negative examples
     :returns:
-        A score matrix gradient to update the score matrix
+        A tuple of pos_weights, neg_weights
+        With 1 indicating weigh this alignment most, 0 ignore this alignment
     """
-    pos_scores = np.array(pos_scores)
-    neg_scores = np.array(neg_scores)
-
     # We actually don't care about anything other than the negative
     # scores that are larger than the smallest positive score and
     # vice versa.
@@ -137,6 +130,65 @@ def calc_score_gradient(pos_scores, neg_scores,
         neg_bad_scores = (min_pos_score - neg_scores[neg_mask]) / score_std
         neg_bad_scores[neg_bad_scores > 1.0] = 1.0
         neg_weights[neg_mask] = 1 - neg_bad_scores
+    return pos_weights, neg_weights
+
+
+def top_k_weight(pos_scores, neg_scores, k=TOP_K):
+    """ Weight scores by worst scoring positive, best scoring negative
+
+    :param pos_scores:
+        The array of scores for positive examples
+    :param neg_scores:
+        The array of scores for negative examples
+    :returns:
+        A tuple of pos_weights, neg_weights
+        With 1 indicating weigh this alignment most, 0 ignore this alignment
+    """
+
+    # Initialize all the vectors to 0
+    pos_weights = np.zeros_like(pos_scores, dtype=np.float)
+    neg_weights = np.zeros_like(neg_scores, dtype=np.float)
+
+    # Find the k smallest positive scores
+    pos_inds = np.argpartition(pos_scores, k)[:k]
+    pos_weights[pos_inds] = 1
+
+    # Find the k largest negative scores
+    neg_inds = np.argpartition(neg_scores, -k)[-k:]
+    neg_weights[neg_inds] = 1
+    return pos_weights, neg_weights
+
+
+def calc_score_gradient(pos_scores, neg_scores,
+                        pos_align, neg_align,
+                        weights='top_k',
+                        k=TOP_K):
+    """ Calculate a score matrix update
+
+    Try to increase the margin between positive and negative alignments
+
+    :param pos_scores:
+        The np.ndarray of positive alignment scores
+    :param neg_scores:
+        The np.ndarray of negative alignment scores
+    :param pos_align:
+        The list of paired alignments for positive scores
+    :param neg_align:
+        The list of paired alignments for negative scores
+    :returns:
+        A score matrix gradient to update the score matrix
+    """
+    pos_scores = np.array(pos_scores)
+    neg_scores = np.array(neg_scores)
+
+    # Apply the score weighting scheme
+    if weights == 'triangle':
+        pos_weights, neg_weights = triangle_weight(pos_scores, neg_scores)
+    elif weights == 'top_k':
+        pos_weights, neg_weights = top_k_weight(pos_scores, neg_scores, k=k)
+    else:
+        pos_weights = np.ones_like(pos_scores, dtype=np.float32)
+        neg_weights = np.ones_like(neg_scores, dtype=np.float32)
 
     # Now reweight the matrix with the positive and negative alignments
     pos_score = calc_distribution(pos_align, weights=pos_weights)
