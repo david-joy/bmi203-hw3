@@ -28,6 +28,7 @@ SCORE_FILES = [
     DATADIR / 'PAM100',
     DATADIR / 'PAM250',
     DATADIR / 'BLOSUM50_OPT',
+    DATADIR / 'MATIO_OPT',
 ]
 
 OVERWRITE = False  # If True, delete the old score files. Else, reuse them

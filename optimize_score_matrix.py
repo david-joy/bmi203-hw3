@@ -29,7 +29,7 @@ SCORE_FILE = DATADIR / 'BLOSUM50'
 GAP_OPENING = -7  # Penalty for opening a gap
 GAP_EXTENSION = -3  # Penalty for extending an already open gap
 
-ALPHA = 0.1  # Step size for the gradient
+ALPHA = 0.5  # Step size for the gradient
 ALPHA_DECAY = 0.75  # Amount to multiply alpha by when the optimizer fails
 MIN_ALPHA = 1e-4  # Minimum step size before stopping
 NUM_STEPS = 100  # Number of optimization loops
@@ -105,7 +105,7 @@ def main(args=None):
 
         opt = optimize.score_matrix_objective(pos_scores, neg_scores)
 
-        if len(opt_history) > 3 and opt < sum(opt_history[-OPT_WINDOW:])/OPT_WINDOW:
+        if len(opt_history) > 3 and opt < min(opt_history[-OPT_WINDOW:]):
             print('Got worse opt, dropping alpha...')
             alpha = alpha * ALPHA_DECAY
             print('Alpha is now: {:0.5f}'.format(alpha))
@@ -124,7 +124,7 @@ def main(args=None):
                 break
 
         print('Step {}: Opt Score {:0.2f}'.format(n, opt))
-        print('Average of last 3: {:0.2f}'.format(sum(opt_history[-OPT_WINDOW:])/OPT_WINDOW))
+        print('Worst of last {}: {:0.2f}'.format(OPT_WINDOW, min(opt_history[-OPT_WINDOW:])))
         print('Last 5 Opt: {}'.format(', '.join(
             '{:0.2f}'.format(o) for o in opt_history[-5:])))
         print('')

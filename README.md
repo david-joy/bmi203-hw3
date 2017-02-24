@@ -107,7 +107,7 @@ Using the **BLOSUM50** matrix, gap opening of **-7** and gap extension of **-3**
 
 Devise an optimization algorithm to modify the values in a starting score matrix such as to maximize the following objective function: sum of TP rates for FP rates of 0.0, 0.1, 0.2, and 0.3. The maximum value for the objective function is 4.0 (where you are getting perfect separation of positive and negative pairs even at the lowest false positive rate). You should use the gap and extension penalties derived from Part 1. Remember, you must maintain symmetry in your matrix. You can make use of real-valued scores in the matrices if desired (this is probably a good idea).
 
-The optimization algorithm calculates the log odds of a set of alignments to generate a new score matrix, weighted by those alignments scores. To increase the number of true positives and decrease the number of false positives, it calculates a score gradient as the difference between the positive score matrix and the negative score matrix. Finally, the algorithm does adaptive gradient descent to iteratively update the score matrix until either a score of **4.0** is achived, the update step size falls below **1e-4**, or the algorithm has run for 200 steps. The step size is adjusted downwards each time the optimization score falls below the median of a running window of past scores.
+The optimization algorithm calculates the log odds of a set of alignments to generate a new score matrix, weighted by those alignments scores. To increase the number of true positives and decrease the number of false positives, it calculates a score gradient as the difference between the positive score matrix and the negative score matrix. Finally, the algorithm does adaptive gradient descent to iteratively update the score matrix until either a score of **4.0** is achived, the update step size falls below **1e-4**, or the algorithm has run for 200 steps. The step size is adjusted downwards each time the optimization score falls below the minimum of a running window of past scores.
 
 - The optimization metric: [score_matrix_objective()](https://github.com/david-joy/bmi203-hw3/blob/master/hw3/optimize.py#L24)
 - Calculation of the alignment gradient: [calc_score_gradient()](https://github.com/david-joy/bmi203-hw3/blob/master/hw3/optimize.py#L162)
@@ -151,21 +151,43 @@ Which results in a reduced length of negative alignments, without affecting the 
 
 <img src="plots/violin_align_BLOSUM50.png"><br />
 
-Interestingly, it has no effect on the normalized ROC curve:
+Interestingly, it has only a minor effect on the normalized ROC curve:
 
 <img src="plots/roc_matrix_norm_BLOSUM50.png"><br />
 
-Which suggests that we're still not optimizing for an effect that survives correcting for sequence length.
+Which suggests that we're still not optimizing for an effect that strongly survives correcting for sequence length.
+
+These plots were generated using [plot_roc_opt.py](https://github.com/david-joy/bmi203-hw3/blob/master/plot_roc_opt.py)
 
 ### Question 3
 
 Beginning from the MATIO matrix, but using the same initial sequence alignments, re-run the optimization. Show the same ROC plots as for (2). Discuss the relationship between the results you see here and the results you saw for (2).
 
+The MATIO matrix is much more poorly optimized than the BLOSUM50 matrix, so I started with a much larger alpha value of **0.5**. This allowed the algorithm to drive the score of the highest scoring negative samples down more rapidly (at the cost of briefly dipping into very low objective function values):<br />
+
+<img src="plots/opt_trajectory_MATIO.png"><br />
+
+Once that initial hill climb was successful, adaptive gradient descent optimized the score matrix to again produce a perfect ROC curve:
+
+<img src="plots/roc_matrix_unnorm_MATIO.png"><br />
+
+Again, the primary effect is by repressing the scores of the negative examples:
+
+<img src="plots/violin_unnorm_MATIO.png"><br />
+
+Although it reduced the total magnitude of the scores of both positive and negative examples by quite a bit.<br />
+
+This isn't simply a normalization problem, because the resulting alignments are also shorter:<br />
+
+<img src="plots/violin_align_MATIO.png"><br />
+
+Which was a weak effect in the BLOSUM50 optimization, but is **much** stronger in this case.
+
 ### Question 4
 
 Describe your optimization algorithm briefly. How might you improve it?
 
-The optimization works because it exploits the fact that the objective function only cares about the difference between the worst positive example and the best negative example. By updating the score matrix to better separate the marginal cases, the marginal positive scores increase and the marginal negative scores decrease until they separate. The current algorithm uses a fixed window, which works quite well initially, but becomes slow when there is one positive example with a poor score and the rest are well separated. A better algorithm would probably reduce the window size as we get close to convergence.
+The optimization works because it exploits the fact that the objective function only cares about the difference between the worst positive examples and the best negative examples. By updating the score matrix to better separate the marginal cases, the marginal positive scores increase and the marginal negative scores decrease until they separate. The current algorithm uses a fixed window, which works quite well initially, but becomes slow when there is one positive example with a poor score and the rest are well separated. A better algorithm would probably reduce the window size as we get close to convergence.
 
 ### Question 5
 
