@@ -27,6 +27,7 @@ SCORE_FILES = [
     DATADIR / 'MATIO',
     DATADIR / 'PAM100',
     DATADIR / 'PAM250',
+    DATADIR / 'BLOSUM50_OPT',
 ]
 
 OVERWRITE = False  # If True, delete the old score files. Else, reuse them
@@ -85,7 +86,7 @@ def calc_all_scores(pair_file, score_file):
                 line = line.split('#', 1)[0].strip()
                 if line == '':
                     continue
-                p1, p2, _ = line.split(',')
+                p1, p2, _, _ = line.split(',')
 
                 have_scores.add((p1, p2))
         print('Loaded {} scores'.format(len(have_scores)))

@@ -10,12 +10,14 @@ Skeleton for sequencing project
 ## Assignment - Part 1
 
 1. Implement Smith-Waterman
-    - Implemented in [smith_waterman()](https://github.com/david-joy/bmi203-hw3/blob/master/hw3/alignment.py#L53)
-    - Dynamic programming calculation implemented in [_calc_sw_matrix()](https://github.com/david-joy/bmi203-hw3/blob/master/hw3/_alignment.pyx#L6) using Cython for speed
-    - Traceback to find longest local alignment in [_calc_sw_traceback()](https://github.com/david-joy/bmi203-hw3/blob/master/hw3/alignment.py#L1)
+    - Implemented in [smith_waterman()](https://github.com/david-joy/bmi203-hw3/blob/master/hw3/alignment.py#L26)
+    - This function wraps several subfunctions written in Cython for speed in [_alignment.pyx](https://github.com/david-joy/bmi203-hw3/blob/master/hw3/_alignment.pyx)
+        - Conversion of python strings and pandas DataFrames to low-level numpy arrays: [_encode_sw_matrix()](https://github.com/david-joy/bmi203-hw3/blob/master/hw3/_alignment.pyx#L6)
+        - Dynamic programming calculation implemented: [_calc_sw_matrix()](https://github.com/david-joy/bmi203-hw3/blob/master/hw3/_alignment.pyx#81)
+        - Traceback to find the longest local alignment: [](https://github.com/david-joy/bmi203-hw3/blob/master/hw3/_alignment.pyx#L28)
     - Tests for the algorithm in [test_alignment.py](https://github.com/david-joy/bmi203-hw3/blob/master/test/test_alignment.py)
 2. It should be able to use any scoring matrix provided
-    - Scoring matrix reader implemented in [read_score_matrix()](https://github.com/david-joy/bmi203-hw3/blob/master/hw3/io.py#L9)
+    - Scoring matrix reader implemented in [read_score_matrix()](https://github.com/david-joy/bmi203-hw3/blob/master/hw3/io.py#L13)
 
 ## Questions - Part 1
 
@@ -105,9 +107,55 @@ Using the **BLOSUM50** matrix, gap opening of **-7** and gap extension of **-3**
 
 Devise an optimization algorithm to modify the values in a starting score matrix such as to maximize the following objective function: sum of TP rates for FP rates of 0.0, 0.1, 0.2, and 0.3. The maximum value for the objective function is 4.0 (where you are getting perfect separation of positive and negative pairs even at the lowest false positive rate). You should use the gap and extension penalties derived from Part 1. Remember, you must maintain symmetry in your matrix. You can make use of real-valued scores in the matrices if desired (this is probably a good idea).
 
+The optimization algorithm calculates the log odds of a set of alignments to generate a new score matrix, weighted by those alignments scores. To increase the number of true positives and decrease the number of false positives, it calculates a score gradient as the difference between the positive score matrix and the negative score matrix. Finally, the algorithm does adaptive gradient descent to iteratively update the score matrix until either a score of **4.0** is achived, the update step size falls below **1e-4**, or the algorithm has run for 200 steps. The step size is adjusted downwards each time the optimization score falls below the median of a running window of past scores.
+
+- The optimization metric: [score_matrix_objective()](https://github.com/david-joy/bmi203-hw3/blob/master/hw3/optimize.py#L24)
+- Calculation of the alignment gradient: [calc_score_gradient()](https://github.com/david-joy/bmi203-hw3/blob/master/hw3/optimize.py#L162)
+- Calculation of the log-odd matrix for a set of alignments: [calc_distribution()](https://github.com/david-joy/bmi203-hw3/blob/master/hw3/optimize.py#L51)
+
+Several weighting schemes were tested to optimize the matrix
+
+- Weigh all examples equally (default argument)
+    - Fails to optimize BLOSUM50 beyond a score of **~2.4**
+- Weigh examples by distance from the best/worst negative/positive example: [triangle_weight()](https://github.com/david-joy/bmi203-hw3/blob/master/hw3/optimize.py#L90)
+    - Fails to optimize BLOSUM50 beyond a score of **~2.6**, sometimes reduces the score to **< 2.0**
+- Only use the 10 lowest scoring positive examples and the 10 highest scoring negative examples: [top_k_weight()](https://github.com/david-joy/bmi203-hw3/blob/master/hw3/optimize.py#L136)
+    - Optimizes BLOSUM50 to **> 3.9** and occasionally gets a perfect score.
+    - This was the gradient weighting scheme used for the following questions.
+
+The main optimization script is implemented in [optimize_score_matrix.py](https://github.com/david-joy/bmi203-hw3/blob/master/optimize_score_matrix.py). Usage
+
+```
+python optimize_score_matrix.py --score-file ./data/SCORE_FILE
+```
+
+The optimal score file will be written to ``./data/SCORE_FILE_OPT`` and a plot of the objective function with each optimization step will be written to ``./plots/opt_trajectory_SCORE_FILE.png``.
+
 ### Question 2
 
 Beginning from the best matrix from above (that which produced the alignments), run your optimization algorithm to maximize the fitness of the new matrix. How much improvement do you see in the fitness? Show the full ROC curves for the original matrix and the optimized matrix. What happens when you now realign the sequences using the new matrix and rescore? Show the new ROC curve following realignment on the same graph as above. Qualitatively discuss how your matrix and your alignments change following optimization.
+
+Using the top 10 weighting of alignments described above, the fitness improves dramtically:<br />
+
+<img src="plots/opt_trajectory_BLOSUM50.png"><br />
+
+This creates an almost perfect ROC curve:<br />
+
+<img src="plots/roc_matrix_unnorm_BLOSUM50.png"><br />
+
+Looking at the distribution, this effect mainly comes from suppressing the negative scores:<br />
+
+<img src="plots/violin_unnorm_BLOSUM50.png"><br />
+
+Which results in a reduced length of negative alignments, without affecting the positive alignments:<br />
+
+<img src="plots/violin_align_BLOSUM50.png"><br />
+
+Interestingly, it has no effect on the normalized ROC curve:
+
+<img src="plots/roc_matrix_norm_BLOSUM50.png"><br />
+
+Which suggests that we're still not optimizing for an effect that survives correcting for sequence length.
 
 ### Question 3
 
@@ -117,13 +165,17 @@ Beginning from the MATIO matrix, but using the same initial sequence alignments,
 
 Describe your optimization algorithm briefly. How might you improve it?
 
+The optimization works because it exploits the fact that the objective function only cares about the difference between the worst positive example and the best negative example. By updating the score matrix to better separate the marginal cases, the marginal positive scores increase and the marginal negative scores decrease until they separate. The current algorithm uses a fixed window, which works quite well initially, but becomes slow when there is one positive example with a poor score and the rest are well separated. A better algorithm would probably reduce the window size as we get close to convergence.
+
 ### Question 5
 
 What would be required in order to make a convincing case that an optimized matrix will be of general utility and will actually be beneficial for people to use in searching databases?
 
+If the score matrix was good at separating a new set of positive and negative examples with minimal similarity to the supplied set of positive and negative examples, especially if those examples didn't have a length bias like the current set, then I would have some confidence that it was a more generally useful scoring matrix.
+
 ## structure
 
-The main algorithm for Smith-Waterman is implemented in [alignment.py](https://github.com/david-joy/bmi203-hw3/blob/master/hw3/alignment.py)with a Cythonized implementation of dynamic programming in [_alignment.pyx](https://github.com/david-joy/bmi203-hw3/blob/master/hw3/_alignment.pyx) for speed. The optimizer is implemented in [optimize.py](https://github.com/david-joy/bmi203-hw3/blob/master/hw3/optimize.py). Code for reading and writing files is in [io.py](https://github.com/david-joy/bmi203-hw3/blob/master/hw3/io.py).
+The main algorithm for Smith-Waterman is implemented in [alignment.py](https://github.com/david-joy/bmi203-hw3/blob/master/hw3/alignment.py) with a Cythonized implementation of dynamic programming in [_alignment.pyx](https://github.com/david-joy/bmi203-hw3/blob/master/hw3/_alignment.pyx) for speed. The optimizer is implemented in [optimize.py](https://github.com/david-joy/bmi203-hw3/blob/master/hw3/optimize.py). Code for reading and writing files is in [io.py](https://github.com/david-joy/bmi203-hw3/blob/master/hw3/io.py).
 
 ```
 .
